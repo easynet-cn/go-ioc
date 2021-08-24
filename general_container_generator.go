@@ -7,28 +7,28 @@ import (
 	"strings"
 )
 
-type ControllerContainerGenerator struct {
+type GeneralContainerGenerator struct {
 	containerConfig ContainerConfig
 }
 
-func NewControllerContainerGenerator(containerConfig ContainerConfig) ContainerGenerator {
-	return &ControllerContainerGenerator{containerConfig: containerConfig}
+func NewGeneralContainerGenerator(containerConfig ContainerConfig) *GeneralContainerGenerator {
+	return &GeneralContainerGenerator{containerConfig: containerConfig}
 }
 
-func (s *ControllerContainerGenerator) Generate(argsBuilder func(args map[string][]string) string) ([]interface{}, error) {
+func (s *GeneralContainerGenerator) Generate(argsBuilder func(args map[string][]string) string) ([]interface{}, error) {
 	files, err1 := os.ReadDir(s.containerConfig.InputDirectory)
 
 	if err1 != nil {
 		return nil, err1
 	}
 
-	controllers := make([]Controller, 0)
+	structInfoes := make([]StructInfo, 0)
 
 	for _, file := range files {
 		filename := file.Name()
 
-		if s.isControllerFile(filename) {
-			controllerName := UpperCamelCase(filename[:len(filename)-3])
+		if s.isGeneralFile(filename) {
+			structName := UpperCamelCase(filename[:len(filename)-3])
 
 			txt, err2 := ReadFile(path.Join(s.containerConfig.InputDirectory, filename))
 
@@ -36,11 +36,11 @@ func (s *ControllerContainerGenerator) Generate(argsBuilder func(args map[string
 				return nil, err2
 			}
 
-			controllerParser := NewControllerParser(controllerName, "@RequestMapping")
+			structParser := NewStructParser(structName)
 
-			controller := controllerParser.Parse(txt).(Controller)
+			structInfo := structParser.Parse(txt).(StructInfo)
 
-			controllers = append(controllers, controller)
+			structInfoes = append(structInfoes, structInfo)
 		}
 	}
 
@@ -72,19 +72,15 @@ func (s *ControllerContainerGenerator) Generate(argsBuilder func(args map[string
 		return nil, err3
 	}
 
-	if err := tpl.Execute(f, &ControllerContext{Controllers: controllers}); err != nil {
+	if err := tpl.Execute(f, &StructContext{StructInfoes: structInfoes}); err != nil {
 		return nil, err
 	}
 
-	result := make([]interface{}, len(controllers))
-
-	for i, controller := range controllers {
-		result[i] = controller
-	}
+	result := make([]interface{}, len(structInfoes))
 
 	return result, nil
 }
 
-func (s *ControllerContainerGenerator) isControllerFile(filename string) bool {
+func (s *GeneralContainerGenerator) isGeneralFile(filename string) bool {
 	return !strings.HasSuffix(filename, "_test.go") && !strings.HasSuffix(filename, "_container.go")
 }

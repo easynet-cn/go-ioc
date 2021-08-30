@@ -1,5 +1,5 @@
 package ioc
 
 type ContainerGenerator interface {
-	Generate(argsBuilder func(args map[string][]string) string) ([]interface{}, error)
+	Generate(convert func(StructContext) interface{}, argsBuild func(map[string][]string) string) (interface{}, error)
 }

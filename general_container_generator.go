@@ -15,7 +15,7 @@ func NewGeneralContainerGenerator(containerConfig ContainerConfig) ContainerGene
 	return &GeneralContainerGenerator{containerConfig: containerConfig}
 }
 
-func (s *GeneralContainerGenerator) Generate(convert func(StructContext) interface{}, argsBuild func(args map[string][]string) string) (interface{}, error) {
+func (s *GeneralContainerGenerator) Generate(convert func(StructContext) interface{}, funcMap map[string]interface{}) (interface{}, error) {
 	structInfoes, err1 := s.load(s.containerConfig.InputDirectory)
 
 	if err1 != nil {
@@ -38,7 +38,6 @@ func (s *GeneralContainerGenerator) Generate(convert func(StructContext) interfa
 
 	_, templateFilename := path.Split(s.containerConfig.TemplateFile)
 
-	funcMap := template.FuncMap{"unescaped": Unescaped, "buildArgs": argsBuild}
 	tpl, err3 := template.New(templateFilename).Funcs(funcMap).ParseFiles(s.containerConfig.TemplateFile)
 
 	if err3 != nil {
